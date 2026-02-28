@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiral Wave - Galería de Equipos</title>
+    
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Iconos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-dark: #050307; 
+            --accent-blue: #00e5ff;
+            --accent-purple: #9d50bb;
+            --accent-gradient: linear-gradient(135deg, #00e5ff 0%, #9d50bb 100%);
+            --whatsapp-green: #25D366;
+            --text-light: #ffffff;
+            --transition-smooth: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @media (min-width: 769px) { body { cursor: none; } }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Open Sans', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- Fondo Spline --- */
+        .spline-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            z-index: -4;
+            background: var(--bg-dark);
+        }
+        .spline-container iframe {
+            width: 100%; height: 100%;
+            border: none;
+            pointer-events: auto;
+        }
+
+        /* --- Overlays --- */
+        .tech-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -3;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%), 
+                        linear-gradient(90deg, rgba(0, 229, 255, 0.015), rgba(0, 0, 0, 0), rgba(157, 80, 187, 0.015));
+            background-size: 100% 4px, 100% 100%;
+            opacity: 0.4;
+        }
+
+        .content-dimmer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            background: rgba(5, 3, 7, 0.1);
+            backdrop-filter: blur(0px);
+            transition: backdrop-filter 0.7s ease, background 0.7s ease;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, transparent 30%, rgba(5, 3, 7, 0.85) 100%);
+            pointer-events: none;
+        }
+
+        /* --- Cursor --- */
+        #custom-cursor {
+            width: 12px; height: 12px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 15px var(--accent-blue);
+            transform: translate(-50%, -50%);
+        }
+        #cursor-follower {
+            width: 35px; height: 35px;
+            border: 1px solid var(--accent-purple);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: transform 0.2s ease-out;
+            transform: translate(-50%, -50%);
+        }
+
+        /* --- Hero --- */
+        header#home {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .turntable-core {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            animation: rotate 20s linear infinite;
+        }
+        .ring-1 { width: 100%; height: 100%; border-width: 2px; border-style: dashed; opacity: 0.3; }
+        .ring-2 { width: 85%; height: 85%; border-color: var(--accent-purple); border-width: 1px; animation-direction: reverse; animation-duration: 15s; }
+        .ring-3 { width: 70%; height: 70%; border-color: var(--accent-blue); opacity: 0.5; animation-duration: 10s; }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .hero-text {
+            text-align: center;
+            z-index: 20;
+            pointer-events: auto;
+        }
+
+        .hero-title {
+            font-family: 'Montserrat';
+            font-size: clamp(2.5rem, 7vw, 4.5rem);
+            font-weight: 900;
+            line-height: 0.9;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            color: #fff;
+            text-shadow: 0 0 25px rgba(0, 229, 255, 0.4);
+        }
+
+        /* --- UI --- */
+        #progress-container {
+            position: fixed;
+            top: 0; z-index: 1000;
+            width: 100%; height: 4px;
+        }
+        #progress-bar {
+            height: 100%;
+            background: var(--accent-gradient);
+            width: 0%;
+        }
+
+        section {
+            padding: 100px 10%;
+            position: relative;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .section-header { margin-bottom: 60px; }
+        .section-title {
+            font-family: 'Montserrat';
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 5px 15px rgba(0,0,0,0.8);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        /* --- Estructura Corregida de Tarjeta --- */
+        .equipment-card {
+            background: rgba(10, 5, 15, 0.85);
+            border: 1px solid rgba(157, 80, 187, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+            backdrop-filter: blur(15px);
+            pointer-events: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Asegura que todas midan lo mismo en su fila */
+        }
+        .equipment-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-blue);
+            background: rgba(20, 10, 30, 0.95);
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.15);
+        }
+
+        .img-wrapper {
+            width: 100%; 
+            height: 220px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            padding: 25px; 
+            background: rgba(0,0,0,0.4);
+            flex-shrink: 0;
+        }
+        .img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .card-info { 
+            padding: 25px; 
+            flex-grow: 1; 
+            display: flex;
+            flex-direction: column;
+        }
+        .card-info h3 { 
+            font-family: 'Montserrat'; 
+            color: var(--accent-blue); 
+            margin-bottom: 15px; 
+            font-size: 1rem; 
+            text-transform: uppercase;
+            min-height: 2.4em; /* Evita que el texto salte y mueva las specs */
+            display: flex;
+            align-items: center;
+        }
+        .spec-item { 
+            border-left: 2px solid var(--accent-purple); 
+            padding-left: 10px; 
+            margin-bottom: 12px; 
+        }
+        .spec-label { font-size: 0.6rem; text-transform: uppercase; color: #aaa; display: block; margin-bottom: 2px; }
+        .spec-value { font-size: 0.85rem; color: #fff; font-weight: 600; display: block; }
+
+        .rider-container {
+            width: 100%; overflow-x: auto; margin-top: 40px;
+            border-radius: 20px; background: rgba(10, 5, 15, 0.85);
+            backdrop-filter: blur(15px); border: 1px solid rgba(157, 80, 187, 0.3);
+            pointer-events: auto;
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { text-align: left; padding: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        th { color: var(--accent-purple); font-family: 'Montserrat'; font-size: 0.7rem; text-transform: uppercase; }
+
+        .reveal { opacity: 0; transform: translateY(30px); transition: 0.8s ease; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        .whatsapp-float {
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+            background: var(--whatsapp-green); color: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: auto;
+        }
+
+        footer { 
+            padding: 100px 10%; text-align: center; 
+            background: linear-gradient(to top, var(--bg-dark), transparent);
+            position: relative; z-index: 10;
+        }
+
+        .footer-logo { 
+            font-family: 'Montserrat'; font-weight: 900; letter-spacing: 5px; 
+            background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 2rem; margin-bottom: 20px; display: block;
+        }
+
+        .footer-link { color: var(--accent-blue); text-decoration: none; font-weight: 600; transition: 0.3s; }
+        .footer-link:hover { color: var(--accent-purple); }
+
+        @media (max-width: 768px) {
+            #custom-cursor, #cursor-follower { display: none; }
+            .turntable-core { width: 300px; height: 300px; }
+            .img-wrapper { height: 180px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="spline-container">
+        <iframe src="https://my.spline.design/flow-LGrVP4PoI0zBelnQEAmRcdhD/" frameborder="0"></iframe>
+    </div>
+
+    <div class="tech-overlay"></div>
+    <div class="content-dimmer" id="content-dimmer"></div>
+    <div class="vignette"></div>
+
+    <div id="custom-cursor"></div>
+    <div id="cursor-follower"></div>
+    <div id="progress-container"><div id="progress-bar"></div></div>
+
+    <header id="home">
+        <div class="turntable-core">
+            <div class="ring ring-1"></div>
+            <div class="ring ring-2"></div>
+            <div class="ring ring-3"></div>
+            <div class="hero-text reveal">
+                <p style="color: var(--accent-blue); letter-spacing: 8px; font-weight: 700; margin-bottom: 10px; font-size: 0.65rem; text-transform: uppercase;">Spiral Wave</p>
+                <h1 class="hero-title">SOUND<br>ENGINE<br><span style="color: var(--accent-purple);">GALERÍA</span></h1>
+                <div style="margin-top: 25px;">
+                    <a href="#audio" style="text-decoration: none; color: #fff; border: 1px solid var(--accent-blue); padding: 12px 30px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; letter-spacing: 2px; background: rgba(0, 229, 255, 0.1); backdrop-filter: blur(5px); text-transform: uppercase;">VER EQUIPOS</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sección 01: Audio -->
+    <section id="audio">
+        <div class="section-header reveal">
+            <p style="color: var(--accent-purple); font-weight: bold; letter-spacing: 4px; font-size: 0.7rem; margin-bottom: 5px;">01. SISTEMAS DE AUDIO</p>
+            <h2 class="section-title">Fidelidad Sonora</h2>
+        </div>
+        <div class="grid-container">
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1hMa4dBLom8eFKZMW7YPSSJZ5OEtV4y3m" alt="Beta Three N12A"></div>
+                <div class="card-info">
+                    <h3>Beta Three N12A</h3>
+                    <div class="spec-item"><span class="spec-label">Tecnología</span><span class="spec-value">DSP Digital N-Series</span></div>
+                    <div class="spec-item"><span class="spec-label">Tipo</span><span class="spec-value">Cabina Activa Profesional</span></div>
+                </div>
+            </div>
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1bqRpMSlyFxyydr2XbVmxcjrYHUo2x85p" alt="Subwoofer EB118A"></div>
+                <div class="card-info">
+                    <h3>Subwoofer EB118A</h3>
+                    <div class="spec-item"><span class="spec-label">Potencia</span><span class="spec-value">Bajos de 18 pulgadas</span></div>
+                    <div class="spec-item"><span class="spec-label">Rendimiento</span><span class="spec-value">Alta Presión Sonora</span></div>
+                </div>
+            </div>
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1rNdOrUXL7F56Ko2HKS_pSXJiX1P5BZ0U" alt="Pioneer Engine"></div>
+                <div class="card-info">
+                    <h3>Pioneer Engine</h3>
+                    <div class="spec-item"><span class="spec-label">Sistema</span><span class="spec-value">Interfaz de Mezcla Digital</span></div>
+                    <div class="spec-item"><span class="spec-label">Control</span><span class="spec-value">Procesamiento de 4 Canales</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección 02: Visuales -->
+    <section id="visuals">
+        <div class="section-header reveal">
+            <p style="color: var(--accent-purple); font-weight: bold; letter-spacing: 4px; font-size: 0.7rem; margin-bottom: 5px;">02. ILUMINACIÓN AMBIENTAL</p>
+            <h2 class="section-title">Efectos Visuales</h2>
+        </div>
+        <div class="grid-container">
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1N7YgMRV3mNtazZIPM69RN4KaJCyiXbCu" alt="Proyector Láser"></div>
+                <div class="card-info">
+                    <h3>Láser RGB Dinámico</h3>
+                    <div class="spec-item"><span class="spec-label">Visual</span><span class="spec-value">Patrones y Formas 3D</span></div>
+                    <div class="spec-item"><span class="spec-label">Alcance</span><span class="spec-value">Proyección Gran Angular</span></div>
+                </div>
+            </div>
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1ZaOTzmygHr50JpLaiABMppiW7zqaNgLb" alt="Cámara de Humo"></div>
+                <div class="card-info">
+                    <h3>Haze Machine Pro</h3>
+                    <div class="spec-item"><span class="spec-label">Atmósfera</span><span class="spec-value">Dispersión de Alta Densidad</span></div>
+                    <div class="spec-item"><span class="spec-label">Seguridad</span><span class="spec-value">Líquido de Base Agua</span></div>
+                </div>
+            </div>
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1qK9DhNfDZn6L-7YA9WnjaZ5s6smmqQCf" alt="Espejo Infinito"></div>
+                <div class="card-info">
+                    <h3>Infinite Mirror</h3>
+                    <div class="spec-item"><span class="spec-label">Inmersión</span><span class="spec-value">Túnel de Luz Profundo</span></div>
+                    <div class="spec-item"><span class="spec-label">Diseño</span><span class="spec-value">Estructura Minimalista</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección 03: Infraestructura (5 Tarjetas) -->
+    <section id="hardware">
+        <div class="section-header reveal">
+            <p style="color: var(--accent-purple); font-weight: bold; letter-spacing: 4px; font-size: 0.7rem; margin-bottom: 5px;">03. INFRAESTRUCTURA PRO</p>
+            <h2 class="section-title">Hardware y Conexión</h2>
+        </div>
+        <div class="grid-container">
+            <!-- 1. Bases -->
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1vGZapIK57lSBvYuxAxyP53CdDlm4zJL2" alt="Base LS-20"></div>
+                <div class="card-info">
+                    <h3>Base LS-20 PRO</h3>
+                    <div class="spec-item"><span class="spec-label">Soporte</span><span class="spec-value">Base Reforzada Profesional</span></div>
+                    <div class="spec-item"><span class="spec-label">Seguridad</span><span class="spec-value">Doble Bloqueo Industrial</span></div>
+                </div>
+            </div>
+            <!-- 2. Micrófono -->
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1BHiWx-AQ63o1lh7HzNKq7q1RDu6xbXos" alt="Shure Beta 58A"></div>
+                <div class="card-info">
+                    <h3>Shure Beta 58A</h3>
+                    <div class="spec-item"><span class="spec-label">Voz</span><span class="spec-value">Micrófono Vocal Supercardioide</span></div>
+                    <div class="spec-item"><span class="spec-label">Salida</span><span class="spec-value">Audio de Alta Fidelidad</span></div>
+                </div>
+            </div>
+            <!-- 3. Estructuras -->
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1auKhlRq0bbfvSxGsJet46IIpp3rBl7dY" alt="Estructuras"></div>
+                <div class="card-info">
+                    <h3>Estructuras Truss</h3>
+                    <div class="spec-item"><span class="spec-label">Montaje</span><span class="spec-value">Sistemas Modulares de Carga</span></div>
+                    <div class="spec-item"><span class="spec-label">Material</span><span class="spec-value">Aluminio Reforzado</span></div>
+                </div>
+            </div>
+            <!-- 4. Luz RGB -->
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1KZMBOnydHNDgGk45qOCoZh80050l1Hg_" alt="Iluminación RGB"></div>
+                <div class="card-info">
+                    <h3>Iluminación RGB</h3>
+                    <div class="spec-item"><span class="spec-label">Control</span><span class="spec-value">Sincronización Rítmica</span></div>
+                    <div class="spec-item"><span class="spec-label">Color</span><span class="spec-value">Paleta Cromática Completa</span></div>
+                </div>
+            </div>
+            <!-- 5. Red Eléctrica -->
+            <div class="equipment-card reveal">
+                <div class="img-wrapper"><img src="https://lh3.googleusercontent.com/d/1QUGZterSYmVmBe6yEFIwF3yC5IZ28nSh" alt="Red Eléctrica"></div>
+                <div class="card-info">
+                    <h3>Red Eléctrica</h3>
+                    <div class="spec-item"><span class="spec-label">Seguridad</span><span class="spec-value">Protección de Carga Alta</span></div>
+                    <div class="spec-item"><span class="spec-label">Conexión</span><span class="spec-value">Cableado de Uso Rudo</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Rider Técnico -->
+    <section id="rider">
+        <div class="section-header reveal">
+            <p style="color: var(--accent-purple); font-weight: bold; letter-spacing: 4px; font-size: 0.7rem; margin-bottom: 5px;">ESPECIFICACIONES</p>
+            <h2 class="section-title">Rider Técnico</h2>
+        </div>
+        <div class="rider-container reveal">
+            <table>
+                <thead>
+                    <tr><th>Componente</th><th>Modelo / Detalle Técnico</th><th>Estado</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>AUDIO</strong></td><td>Beta Three N12A + EB118A Subwoofer</td><td>CERTIFICADO</td></tr>
+                    <tr><td><strong>VISUALES</strong></td><td>Láser RGB + Par LED + Espejo Infinito</td><td>OPERATIVO</td></tr>
+                    <tr><td><strong>VOZ</strong></td><td>Shure Beta 58A + Inalámbricos</td><td>PROFESIONAL</td></tr>
+                    <tr><td><strong>INFRAESTRUCTURA</strong></td><td>LS-20 + Truss + Red Eléctrica Ruda</td><td>SEGURIDAD</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <a href="https://api.whatsapp.com/send?phone=573208734659" class="whatsapp-float" target="_blank" rel="noopener">
+        <i data-lucide="message-circle"></i>
+    </a>
+
+    <footer>
+        <span class="footer-logo">SPIRAL WAVE</span>
+        <a href="mailto:spiraldefuego@gmail.com?subject=Consulta Spiral Wave&body=Hola equipo, solicito información sobre..." class="footer-link">
+            spiraldefuego@gmail.com
+        </a>
+        <p style="margin-top: 30px; font-size: 0.6rem; opacity: 0.4;">© 2026 - INGENIERÍA DE EVENTOS | SONIDO PROFESIONAL</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        const cursor = document.getElementById('custom-cursor');
+        const follower = document.getElementById('cursor-follower');
+        window.addEventListener('mousemove', (e) => {
+            if(cursor) { cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px'; }
+            if(follower) { follower.style.left = e.clientX + 'px'; follower.style.top = e.clientY + 'px'; }
+        });
+
+        window.addEventListener('scroll', () => {
+            const st = window.pageYOffset;
+            const height = document.documentElement.scrollHeight - window.innerHeight;
+            
+            const pb = document.getElementById('progress-bar');
+            if(pb) pb.style.width = (st / height * 100) + "%";
+
+            const dimmer = document.getElementById('content-dimmer');
+            const threshold = window.innerHeight * 0.4;
+            if (st > threshold) {
+                dimmer.style.backdropFilter = "blur(8px)";
+                dimmer.style.background = "rgba(5, 3, 7, 0.45)";
+            } else {
+                dimmer.style.backdropFilter = "blur(0px)";
+                dimmer.style.background = "rgba(5, 3, 7, 0.1)";
+            }
+
+            document.querySelectorAll('.reveal').forEach(el => {
+                if (el.getBoundingClientRect().top < window.innerHeight * 0.9) {
+                    el.classList.add('active');
+                }
+            });
+        });
+
+        window.dispatchEvent(new Event('scroll'));
+    </script>
+</body>
+</html>
